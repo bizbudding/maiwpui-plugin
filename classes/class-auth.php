@@ -1,0 +1,321 @@
+<?php
+/**
+ * MaiWPUI Auth class.
+ *
+ * Handles authentication token generation and verification.
+ * Uses selector/validator pattern for secure token storage.
+ *
+ * Token format: {user_id}.{selector}.{validator}
+ * - user_id: For direct database lookup (not secret)
+ * - selector: Identifies which token (stored plain)
+ * - validator: The secret (only SHA-256 hash is stored)
+ *
+ * @since 0.1.0
+ *
+ * @package MaiWPUI
+ */
+
+namespace MaiWPUI;
+
+use MaiWPUI\Logger;
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Auth class.
+ *
+ * @since 0.1.0
+ */
+class Auth {
+
+	/**
+	 * Meta key for storing auth tokens.
+	 *
+	 * @since 0.1.0
+	 */
+	const TOKEN_META_KEY = 'maiwpui_auth_tokens';
+
+	/**
+	 * Token expiry duration in days.
+	 *
+	 * @since 0.1.0
+	 */
+	const TOKEN_EXPIRY_DAYS = 30;
+
+	/**
+	 * Generate an auth token for a user.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int    $user_id     The user ID.
+	 * @param string $device_name Optional. Device identifier for session management.
+	 *
+	 * @return string The auth token (plain text, send to client once).
+	 */
+	public static function generate_token( int $user_id, string $device_name = '' ): string {
+		// Generate selector (8 bytes = 16 hex chars) and validator (32 bytes = 64 hex chars).
+		$selector  = bin2hex( random_bytes( 8 ) );
+		$validator = bin2hex( random_bytes( 32 ) );
+
+		// SHA-256 is appropriate for high-entropy random tokens.
+		$validator_hash = hash( 'sha256', $validator );
+
+		// Get existing tokens (supports multi-device).
+		$tokens = get_user_meta( $user_id, self::TOKEN_META_KEY, true );
+
+		if ( ! is_array( $tokens ) ) {
+			$tokens = [];
+		}
+
+		// Prune expired tokens.
+		$now    = time();
+		$tokens = array_filter( $tokens, fn( $t ) => isset( $t['expires'] ) && $t['expires'] > $now );
+
+		// Add new token.
+		$tokens[ $selector ] = [
+			'hash'    => $validator_hash,
+			'created' => $now,
+			'expires' => $now + ( self::TOKEN_EXPIRY_DAYS * DAY_IN_SECONDS ),
+			'device'  => sanitize_text_field( $device_name ),
+		];
+
+		update_user_meta( $user_id, self::TOKEN_META_KEY, $tokens );
+
+		// Return token: user_id.selector.validator
+		return $user_id . '.' . $selector . '.' . $validator;
+	}
+
+	/**
+	 * Verify a token and return the user ID.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param string $token The plain text token.
+	 *
+	 * @return int|false User ID if valid, false otherwise.
+	 */
+	public static function verify_token( string $token ) {
+		$logger = Logger::get_instance();
+
+		if ( empty( $token ) ) {
+			return false;
+		}
+
+		$parts = explode( '.', $token, 3 );
+
+		if ( count( $parts ) !== 3 ) {
+			$logger->warning( 'Token verification failed: invalid token format' );
+			return false;
+		}
+
+		[ $user_id, $selector, $validator ] = $parts;
+		$user_id = absint( $user_id );
+
+		if ( ! $user_id ) {
+			$logger->warning( 'Token verification failed: invalid user ID in token' );
+			return false;
+		}
+
+		// Direct lookup by user_id - no scanning.
+		$tokens = get_user_meta( $user_id, self::TOKEN_META_KEY, true );
+
+		if ( ! is_array( $tokens ) || ! isset( $tokens[ $selector ] ) ) {
+			$logger->warning( sprintf( 'Token verification failed: selector not found for user ID %d', $user_id ) );
+			return false;
+		}
+
+		$token_data = $tokens[ $selector ];
+
+		// Check expiry.
+		if ( ! isset( $token_data['expires'] ) || time() > $token_data['expires'] ) {
+			$logger->warning( sprintf( 'Token verification failed: token expired for user ID %d', $user_id ) );
+			unset( $tokens[ $selector ] );
+			update_user_meta( $user_id, self::TOKEN_META_KEY, $tokens );
+			return false;
+		}
+
+		// Constant-time comparison (critical for security).
+		$validator_hash = hash( 'sha256', $validator );
+
+		if ( ! hash_equals( $token_data['hash'], $validator_hash ) ) {
+			$logger->warning( sprintf( 'Token verification failed: invalid validator for user ID %d', $user_id ) );
+			return false;
+		}
+
+		return $user_id;
+	}
+
+	/**
+	 * Invalidate a specific token (logout current device).
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int    $user_id The user ID.
+	 * @param string $token   The token to invalidate.
+	 *
+	 * @return void
+	 */
+	public static function invalidate_token( int $user_id, string $token ): void {
+		$parts = explode( '.', $token, 3 );
+
+		if ( count( $parts ) !== 3 ) {
+			return;
+		}
+
+		$selector = $parts[1];
+		$tokens   = get_user_meta( $user_id, self::TOKEN_META_KEY, true );
+
+		if ( is_array( $tokens ) && isset( $tokens[ $selector ] ) ) {
+			unset( $tokens[ $selector ] );
+			update_user_meta( $user_id, self::TOKEN_META_KEY, $tokens );
+		}
+	}
+
+	/**
+	 * Invalidate all tokens for a user (logout all devices).
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int $user_id The user ID.
+	 *
+	 * @return void
+	 */
+	public static function invalidate_all_tokens( int $user_id ): void {
+		delete_user_meta( $user_id, self::TOKEN_META_KEY );
+	}
+
+	/**
+	 * Get active sessions for a user.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int $user_id The user ID.
+	 *
+	 * @return array List of active sessions.
+	 */
+	public static function get_sessions( int $user_id ): array {
+		$tokens = get_user_meta( $user_id, self::TOKEN_META_KEY, true );
+
+		if ( ! is_array( $tokens ) ) {
+			return [];
+		}
+
+		$now      = time();
+		$sessions = [];
+
+		foreach ( $tokens as $selector => $data ) {
+			if ( isset( $data['expires'] ) && $data['expires'] > $now ) {
+				$sessions[] = [
+					'selector' => $selector,
+					'device'   => $data['device'] ?? '',
+					'created'  => $data['created'] ?? 0,
+					'expires'  => $data['expires'],
+				];
+			}
+		}
+
+		return $sessions;
+	}
+
+	/**
+	 * Extract token from Authorization header.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 *
+	 * @return string|false Token if found, false otherwise.
+	 */
+	public static function get_token_from_request( \WP_REST_Request $request ) {
+		$auth_header = $request->get_header( 'Authorization' );
+
+		if ( ! $auth_header ) {
+			return false;
+		}
+
+		// Extract token from "Bearer <token>" format.
+		if ( preg_match( '/Bearer\s+(.+)/i', $auth_header, $matches ) ) {
+			return $matches[1];
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get user ID from request token.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 *
+	 * @return int|false User ID or false if invalid.
+	 */
+	public static function get_user_id_from_request( \WP_REST_Request $request ) {
+		$token = self::get_token_from_request( $request );
+
+		if ( ! $token ) {
+			return false;
+		}
+
+		return self::verify_token( $token );
+	}
+
+	/**
+	 * Permission callback that verifies auth token.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 *
+	 * @return bool|\WP_Error True if valid, WP_Error otherwise.
+	 */
+	public static function permission_callback( \WP_REST_Request $request ) {
+		$user_id = self::get_user_id_from_request( $request );
+
+		if ( ! $user_id ) {
+			$logger = Logger::get_instance();
+			$logger->warning( sprintf( 'Permission denied: invalid token for route %s', $request->get_route() ) );
+
+			return new \WP_Error(
+				'maiwpui_invalid_token',
+				__( 'Invalid or expired token.', 'maiwpui' ),
+				[ 'status' => 401 ]
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Build user data array for API responses.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int   $user_id   The user ID.
+	 * @param array $meta_keys Optional. Array of meta keys to include.
+	 *
+	 * @return array|null User data array or null if user not found.
+	 */
+	public static function get_user_data( int $user_id, array $meta_keys = [] ): ?array {
+		$user = get_userdata( $user_id );
+
+		if ( ! $user ) {
+			return null;
+		}
+
+		$data = [
+			'user_id'      => $user_id,
+			'email'        => $user->user_email,
+			'username'     => $user->user_login,
+			'display_name' => $user->display_name,
+		];
+
+		// Add requested meta values.
+		foreach ( $meta_keys as $key ) {
+			$data[ $key ] = get_user_meta( $user_id, $key, true ) ?: null;
+		}
+
+		return $data;
+	}
+}
