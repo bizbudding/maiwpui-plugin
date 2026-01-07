@@ -4,8 +4,8 @@
  * Plugin URI:        https://bizbudding.com
  * Description:       WordPress UI library for building mobile apps with Expo.
  * Version:           0.1.0
- * Requires at least: 6.4
- * Requires PHP:      8.2
+ * Requires at least: 6.9
+ * Requires PHP:      8.1
  * Text Domain:       maiwpui
  * Author:            BizBudding
  * Author URI:        https://bizbudding.com

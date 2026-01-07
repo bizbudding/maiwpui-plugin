@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-*
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts
+*.log
+*.cache
+
+# Environment
+.env
+.env.local
