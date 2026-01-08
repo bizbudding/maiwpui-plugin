@@ -331,6 +331,10 @@ class REST_API {
 	/**
 	 * Sanitize an array of strings.
 	 *
+	 * Accepts both array and comma-separated string formats:
+	 * - ?param[]=a&param[]=b (array notation)
+	 * - ?param=a,b (comma-separated string)
+	 *
 	 * @since 0.1.0
 	 *
 	 * @param mixed $value The value to sanitize.
@@ -338,6 +342,12 @@ class REST_API {
 	 * @return array
 	 */
 	public function sanitize_string_array( $value ): array {
+		// Handle comma-separated string.
+		if ( is_string( $value ) ) {
+			$value = array_map( 'trim', explode( ',', $value ) );
+			$value = array_filter( $value ); // Remove empty strings.
+		}
+
 		if ( ! is_array( $value ) ) {
 			return [];
 		}
