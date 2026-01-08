@@ -37,6 +37,60 @@ class Auth {
 	const TOKEN_META_KEY = 'maiwpui_auth_tokens';
 
 	/**
+	 * Initialize auth hooks.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return void
+	 */
+	public static function init(): void {
+		add_filter( 'determine_current_user', [ __CLASS__, 'authenticate_token' ], 20 );
+	}
+
+	/**
+	 * Authenticate user from Bearer token for REST API requests.
+	 *
+	 * This filter runs early and sets up the WordPress user context,
+	 * making get_current_user_id() work correctly for authenticated requests.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int|false $user_id Current user ID or false.
+	 *
+	 * @return int|false User ID if token valid, original value otherwise.
+	 */
+	public static function authenticate_token( $user_id ) {
+		// Don't override if already authenticated.
+		if ( $user_id ) {
+			return $user_id;
+		}
+
+		// Only process REST API requests.
+		if ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST ) {
+			return $user_id;
+		}
+
+		// Get Authorization header.
+		$auth_header = isset( $_SERVER['HTTP_AUTHORIZATION'] )
+			? $_SERVER['HTTP_AUTHORIZATION']
+			: ( isset( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] : '' );
+
+		if ( ! $auth_header || ! preg_match( '/Bearer\s+(.+)/i', $auth_header, $matches ) ) {
+			return $user_id;
+		}
+
+		$token            = $matches[1];
+		$verified_user_id = self::verify_token( $token );
+
+		if ( $verified_user_id ) {
+			wp_set_current_user( $verified_user_id );
+			return $verified_user_id;
+		}
+
+		return $user_id;
+	}
+
+	/**
 	 * Token expiry duration in days.
 	 *
 	 * @since 0.1.0

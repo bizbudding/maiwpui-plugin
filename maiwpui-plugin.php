@@ -45,6 +45,9 @@ add_action( 'plugins_loaded', 'maiwpui_init' );
  * @return void
  */
 function maiwpui_init() {
+	// Initialize auth (sets up current user from Bearer token).
+	MaiWPUI\Auth::init();
+
 	// Initialize core plugin (handles meta registration, upgrades).
 	MaiWPUI\Plugin::get_instance();
 
