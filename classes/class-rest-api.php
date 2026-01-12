@@ -287,6 +287,24 @@ class REST_API {
 				],
 			]
 		);
+
+		// POST /auto-login-token - Generate one-time auto-login token.
+		register_rest_route(
+			self::NAMESPACE,
+			'/auto-login-token',
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'handle_generate_autologin_token' ],
+				'permission_callback' => [ Auth::class, 'permission_callback' ],
+				'args'                => [
+					'redirect_url' => [
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'esc_url_raw',
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -886,6 +904,54 @@ class REST_API {
 			[
 				'id'   => $post_id,
 				'type' => get_post_type( $post_id ),
+			],
+			200
+		);
+	}
+
+	/**
+	 * Handle generate auto-login token.
+	 *
+	 * Creates a one-time, short-lived token that can be used to automatically
+	 * log a user into the website when they click a link from the mobile app.
+	 *
+	 * Security measures:
+	 * - Token is 32 random characters (impossible to guess)
+	 * - Token expires in 5 minutes
+	 * - Token is single-use (deleted after use)
+	 * - Requires authenticated user to generate
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function handle_generate_autologin_token( \WP_REST_Request $request ) {
+		$user_id      = Auth::get_user_id_from_request( $request );
+		$redirect_url = $request->get_param( 'redirect_url' );
+
+		// Generate a cryptographically secure random token.
+		$token = wp_generate_password( 32, false, false );
+
+		// Store token data as a transient (expires in 5 minutes).
+		set_transient(
+			'maiwpui_autologin_' . $token,
+			[
+				'user_id'      => $user_id,
+				'redirect_url' => $redirect_url,
+				'created'      => time(),
+			],
+			5 * MINUTE_IN_SECONDS
+		);
+
+		// Build the auto-login URL.
+		$autologin_url = add_query_arg( 'maiwpui_autologin', $token, $redirect_url );
+
+		return new \WP_REST_Response(
+			[
+				'success' => true,
+				'url'     => $autologin_url,
 			],
 			200
 		);
