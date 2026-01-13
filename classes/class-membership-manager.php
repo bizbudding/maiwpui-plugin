@@ -126,7 +126,7 @@ class Membership_Manager {
 	 *
 	 * @param int $user_id The user ID.
 	 *
-	 * @return array Contains 'memberships' array and 'is_peopletak' boolean.
+	 * @return array Contains 'memberships' array. Apps can filter to add custom flags.
 	 */
 	public function get_user_memberships( int $user_id ): array {
 		$all_memberships = [];
@@ -140,17 +140,23 @@ class Membership_Manager {
 			}
 		}
 
-		// Get plan IDs.
-		$plan_ids = array_column( $all_memberships, 'plan_id' );
-
-		// Check for PeopleTek membership.
-		$peopletak_plan_ids = $this->get_peopletak_plan_ids();
-		$is_peopletak       = ! empty( array_intersect( $plan_ids, $peopletak_plan_ids ) );
-
-		return [
-			'memberships'  => $all_memberships,
-			'is_peopletak' => $is_peopletak,
+		$data = [
+			'memberships' => $all_memberships,
 		];
+
+		/**
+		 * Filter the user membership data.
+		 *
+		 * Apps can use this to add custom flags based on membership plan IDs.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param array $data    The membership data array.
+		 * @param int   $user_id The user ID.
+		 * @param array $plan_ids Array of plan IDs the user has.
+		 */
+		$plan_ids = array_column( $all_memberships, 'plan_id' );
+		return apply_filters( 'maiwpui_user_membership_data', $data, $user_id, $plan_ids );
 	}
 
 	/**
@@ -192,39 +198,6 @@ class Membership_Manager {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Check if user is a PeopleTek member.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @param int $user_id The user ID.
-	 *
-	 * @return bool
-	 */
-	public function is_peopletak_member( int $user_id ): bool {
-		$data = $this->get_user_memberships( $user_id );
-
-		return $data['is_peopletak'];
-	}
-
-	/**
-	 * Get PeopleTek plan IDs.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @return array
-	 */
-	public function get_peopletak_plan_ids(): array {
-		/**
-		 * Filter the PeopleTek plan IDs.
-		 *
-		 * @since 0.1.0
-		 *
-		 * @param array $plan_ids Array of plan IDs that identify PeopleTek members.
-		 */
-		return apply_filters( 'maiwpui_peopletak_plan_ids', [ 7176 ] );
 	}
 
 	/**

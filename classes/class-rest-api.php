@@ -640,17 +640,27 @@ class REST_API {
 			}
 		}
 
-		return new \WP_REST_Response(
-			array_merge(
-				$user_data,
-				[
-					'memberships'  => $membership_data['memberships'],
-					'is_peopletak' => $membership_data['is_peopletak'],
-					'terms'        => $user_terms,
-				]
-			),
-			200
+		$response_data = array_merge(
+			$user_data,
+			$membership_data,
+			[
+				'terms' => $user_terms,
+			]
 		);
+
+		/**
+		 * Filter the user profile response data.
+		 *
+		 * Allows apps to add custom data to the profile response.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param array $response_data The profile response data.
+		 * @param int   $user_id       The user ID.
+		 */
+		$response_data = apply_filters( 'maiwpui_user_profile_data', $response_data, $user_id );
+
+		return new \WP_REST_Response( $response_data, 200 );
 	}
 
 	/**

@@ -2,6 +2,33 @@
 
 This WordPress plugin provides REST API endpoints for mobile apps using the maiwpui React Native library.
 
+## CRITICAL: App-Agnostic Rule
+
+**This plugin MUST remain app-agnostic.** It is a shared library used by multiple apps (QwikCoach, etc.).
+
+**NEVER add:**
+- App-specific business logic (e.g., `is_peopletak`, `qc_*` anything)
+- Hardcoded IDs specific to one app
+- App-specific user flags or checks
+
+**ALWAYS use filters** to allow apps to extend functionality in their own mu-plugins files:
+- `maiwpui_user_profile_data` - extend profile response
+- `maiwpui_user_membership_data` - add custom membership flags
+- `maiwpui_allowed_user_meta_keys` - allow app-specific meta keys
+
+**Example - WRONG (in maiwpui-plugin):**
+```php
+$is_peopletak = in_array(7176, $plan_ids); // NO! App-specific
+```
+
+**Example - CORRECT (in app's mu-plugins):**
+```php
+add_filter('maiwpui_user_membership_data', function($data, $user_id, $plan_ids) {
+    $data['is_peopletak'] = in_array(7176, $plan_ids);
+    return $data;
+}, 10, 3);
+```
+
 ## REST API Namespace
 
 All endpoints are under: `/wp-json/maiwpui/v1/`
@@ -54,6 +81,29 @@ add_filter('maiwpui_allowed_user_meta_keys', function($keys) {
 
 ### maiwpui_allowed_user_taxonomies
 Whitelist of taxonomies for user term assignment. Default: `['user-group']`
+
+### maiwpui_user_profile_data
+Extend the user profile response with app-specific data.
+
+```php
+add_filter('maiwpui_user_profile_data', function($data, $user_id) {
+    $data['access'] = [
+        'status' => get_user_meta($user_id, 'qc_access_status', true),
+        'can_access' => my_app_check_access($user_id),
+    ];
+    return $data;
+}, 10, 2);
+```
+
+### maiwpui_user_membership_data
+Add custom flags to membership data based on plan IDs.
+
+```php
+add_filter('maiwpui_user_membership_data', function($data, $user_id, $plan_ids) {
+    $data['is_premium'] = in_array(123, $plan_ids);
+    return $data;
+}, 10, 3);
+```
 
 ## Common Issues
 
