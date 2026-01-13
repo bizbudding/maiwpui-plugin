@@ -142,6 +142,19 @@ class Plugin {
 		// Build clean redirect URL (without the token).
 		$redirect_url = remove_query_arg( 'maiwpui_autologin', $data['redirect_url'] );
 
+		/**
+		 * Fires after a user is logged in via auto-login token from the mobile app.
+		 *
+		 * Use this hook to set session cookies or perform other actions that should
+		 * only happen when a user accesses the site from the mobile app.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param int    $user_id      The logged-in user ID.
+		 * @param string $redirect_url The URL the user will be redirected to.
+		 */
+		do_action( 'maiwpui_after_autologin', $data['user_id'], $redirect_url );
+
 		// Redirect to the clean URL.
 		wp_safe_redirect( $redirect_url );
 		exit;
