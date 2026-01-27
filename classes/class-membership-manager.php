@@ -1,15 +1,15 @@
 <?php
 /**
- * MaiWPUI Membership Manager class.
+ * MaiExpoWP Membership Manager class.
  *
  * Manages membership providers and aggregates membership data.
  *
  * @since 0.1.0
  *
- * @package MaiWPUI
+ * @package MaiExpoWP
  */
 
-namespace MaiWPUI;
+namespace MaiExpoWP;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
@@ -78,7 +78,7 @@ class Membership_Manager {
 		$this->register_provider( new Providers\Restrict_Content_Pro() );
 
 		// Allow additional providers to be registered.
-		do_action( 'maiwpui_register_membership_providers', $this );
+		do_action( 'maiexpowp_register_membership_providers', $this );
 	}
 
 	/**
@@ -156,7 +156,7 @@ class Membership_Manager {
 		 * @param array $plan_ids Array of plan IDs the user has.
 		 */
 		$plan_ids = array_column( $all_memberships, 'plan_id' );
-		return apply_filters( 'maiwpui_user_membership_data', $data, $user_id, $plan_ids );
+		return apply_filters( 'maiexpowp_user_membership_data', $data, $user_id, $plan_ids );
 	}
 
 	/**

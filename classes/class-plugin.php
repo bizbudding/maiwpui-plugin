@@ -1,15 +1,15 @@
 <?php
 /**
- * MaiWPUI Plugin class.
+ * MaiExpoWP Plugin class.
  *
  * Handles plugin initialization, meta registration, and version upgrades.
  *
  * @since 0.1.0
  *
- * @package MaiWPUI
+ * @package MaiExpoWP
  */
 
-namespace MaiWPUI;
+namespace MaiExpoWP;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
@@ -26,14 +26,14 @@ class Plugin {
 	 *
 	 * @since 0.1.0
 	 */
-	const VERSION_OPTION = 'maiwpui_version';
+	const VERSION_OPTION = 'maiexpowp_version';
 
 	/**
 	 * Option name for database version.
 	 *
 	 * @since 0.1.0
 	 */
-	const DB_VERSION_OPTION = 'maiwpui_db_version';
+	const DB_VERSION_OPTION = 'maiexpowp_db_version';
 
 	/**
 	 * Current database version.
@@ -102,21 +102,21 @@ class Plugin {
 	 */
 	public function handle_autologin(): void {
 		// Check if auto-login token is present.
-		if ( ! isset( $_GET['maiwpui_autologin'] ) ) {
+		if ( ! isset( $_GET['maiexpowp_autologin'] ) ) {
 			return;
 		}
 
-		$token = sanitize_text_field( wp_unslash( $_GET['maiwpui_autologin'] ) );
+		$token = sanitize_text_field( wp_unslash( $_GET['maiexpowp_autologin'] ) );
 
 		// Get token data from transient.
-		$transient_key = 'maiwpui_autologin_' . $token;
+		$transient_key = 'maiexpowp_autologin_' . $token;
 		$data          = get_transient( $transient_key );
 
 		if ( ! $data || ! is_array( $data ) || empty( $data['user_id'] ) ) {
 			// Token invalid or expired - show error page.
 			wp_die(
-				esc_html__( 'This login link has expired or is invalid. Please try again from the app.', 'maiwpui' ),
-				esc_html__( 'Login Link Expired', 'maiwpui' ),
+				esc_html__( 'This login link has expired or is invalid. Please try again from the app.', 'maiexpowp' ),
+				esc_html__( 'Login Link Expired', 'maiexpowp' ),
 				[ 'response' => 403 ]
 			);
 		}
@@ -129,8 +129,8 @@ class Plugin {
 
 		if ( ! $user ) {
 			wp_die(
-				esc_html__( 'User not found.', 'maiwpui' ),
-				esc_html__( 'Login Error', 'maiwpui' ),
+				esc_html__( 'User not found.', 'maiexpowp' ),
+				esc_html__( 'Login Error', 'maiexpowp' ),
 				[ 'response' => 404 ]
 			);
 		}
@@ -140,7 +140,7 @@ class Plugin {
 		wp_set_current_user( $data['user_id'] );
 
 		// Build clean redirect URL (without the token).
-		$redirect_url = remove_query_arg( 'maiwpui_autologin', $data['redirect_url'] );
+		$redirect_url = remove_query_arg( 'maiexpowp_autologin', $data['redirect_url'] );
 
 		/**
 		 * Fires after a user is logged in via auto-login token from the mobile app.
@@ -153,7 +153,7 @@ class Plugin {
 		 * @param int    $user_id      The logged-in user ID.
 		 * @param string $redirect_url The URL the user will be redirected to.
 		 */
-		do_action( 'maiwpui_after_autologin', $data['user_id'], $redirect_url );
+		do_action( 'maiexpowp_after_autologin', $data['user_id'], $redirect_url );
 
 		// Redirect to the clean URL.
 		wp_safe_redirect( $redirect_url );
@@ -174,7 +174,7 @@ class Plugin {
 			Auth::TOKEN_META_KEY,
 			[
 				'type'              => 'array',
-				'description'       => __( 'Authentication tokens for API access.', 'maiwpui' ),
+				'description'       => __( 'Authentication tokens for API access.', 'maiexpowp' ),
 				'single'            => true,
 				'sanitize_callback' => [ $this, 'sanitize_tokens_meta' ],
 				'auth_callback'     => '__return_false', // Never expose via REST.
@@ -192,7 +192,7 @@ class Plugin {
 		 * @param array $meta_keys Array of meta key definitions.
 		 *                         Each key should have: type, description, sanitize_callback (optional).
 		 */
-		$custom_meta = apply_filters( 'maiwpui_register_user_meta', [] );
+		$custom_meta = apply_filters( 'maiexpowp_register_user_meta', [] );
 
 		foreach ( $custom_meta as $meta_key => $args ) {
 			$defaults = [
@@ -270,8 +270,8 @@ class Plugin {
 		}
 
 		// Update version options if changed.
-		if ( MAIWPUI_VERSION !== $current_version ) {
-			update_option( self::VERSION_OPTION, MAIWPUI_VERSION, false ); // false = no autoload.
+		if ( MAIEXPOWP_VERSION !== $current_version ) {
+			update_option( self::VERSION_OPTION, MAIEXPOWP_VERSION, false ); // false = no autoload.
 		}
 
 		if ( $current_db_version < self::DB_VERSION ) {
@@ -313,7 +313,7 @@ class Plugin {
 		 * @param int  $to_version       The new DB version.
 		 * @param bool $is_fresh_install Whether this is a fresh install.
 		 */
-		do_action( 'maiwpui_after_migrations', $from_version, self::DB_VERSION, $is_fresh_install );
+		do_action( 'maiexpowp_after_migrations', $from_version, self::DB_VERSION, $is_fresh_install );
 	}
 
 	/**
@@ -324,7 +324,7 @@ class Plugin {
 	 * @return string
 	 */
 	public static function get_version(): string {
-		return MAIWPUI_VERSION;
+		return MAIEXPOWP_VERSION;
 	}
 
 	/**
@@ -347,7 +347,7 @@ class Plugin {
 	 */
 	public static function activate(): void {
 		// Set initial versions.
-		add_option( self::VERSION_OPTION, MAIWPUI_VERSION, '', false );
+		add_option( self::VERSION_OPTION, MAIEXPOWP_VERSION, '', false );
 		add_option( self::DB_VERSION_OPTION, self::DB_VERSION, '', false );
 
 		/**
@@ -355,7 +355,7 @@ class Plugin {
 		 *
 		 * @since 0.1.0
 		 */
-		do_action( 'maiwpui_activate' );
+		do_action( 'maiexpowp_activate' );
 	}
 
 	/**
@@ -371,7 +371,7 @@ class Plugin {
 		 *
 		 * @since 0.1.0
 		 */
-		do_action( 'maiwpui_deactivate' );
+		do_action( 'maiexpowp_deactivate' );
 	}
 
 	/**
@@ -398,6 +398,6 @@ class Plugin {
 		 *
 		 * @since 0.1.0
 		 */
-		do_action( 'maiwpui_uninstall' );
+		do_action( 'maiexpowp_uninstall' );
 	}
 }

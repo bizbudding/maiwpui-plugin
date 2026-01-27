@@ -7,10 +7,10 @@
  *
  * @version 0.5.0
  *
- * @package MaiWPUI
+ * @package MaiExpoWP
  */
 
-namespace MaiWPUI;
+namespace MaiExpoWP;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;

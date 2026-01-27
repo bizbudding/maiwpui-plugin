@@ -1,17 +1,17 @@
 <?php
 /**
- * MaiWPUI WooCommerce Memberships provider.
+ * MaiExpoWP WooCommerce Memberships provider.
  *
  * Membership provider for WooCommerce Memberships plugin.
  *
  * @since 0.1.0
  *
- * @package MaiWPUI
+ * @package MaiExpoWP
  */
 
-namespace MaiWPUI\Providers;
+namespace MaiExpoWP\Providers;
 
-use MaiWPUI\Membership_Provider;
+use MaiExpoWP\Membership_Provider;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;

@@ -1,12 +1,12 @@
 <?php
 /**
- * MaiWPUI Uninstall.
+ * MaiExpoWP Uninstall.
  *
  * Fired when the plugin is uninstalled.
  *
  * @since 0.1.0
  *
- * @package MaiWPUI
+ * @package MaiExpoWP
  */
 
 // Exit if not called by WordPress.
@@ -15,7 +15,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 }
 
 // Include the plugin file to get constants and classes.
-require_once __DIR__ . '/maiwpui-plugin.php';
+require_once __DIR__ . '/maiexpowp-plugin.php';
 
 // Run uninstall.
-MaiWPUI\Plugin::uninstall();
+MaiExpoWP\Plugin::uninstall();

@@ -1,15 +1,15 @@
 <?php
 /**
- * MaiWPUI Membership Provider abstract class.
+ * MaiExpoWP Membership Provider abstract class.
  *
  * Base class for membership provider implementations.
  *
  * @since 0.1.0
  *
- * @package MaiWPUI
+ * @package MaiExpoWP
  */
 
-namespace MaiWPUI;
+namespace MaiExpoWP;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;

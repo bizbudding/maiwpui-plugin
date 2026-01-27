@@ -1,17 +1,17 @@
 <?php
 /**
- * MaiWPUI REST API class.
+ * MaiExpoWP REST API class.
  *
  * Registers and handles REST API endpoints.
  *
  * @since 0.1.0
  *
- * @package MaiWPUI
+ * @package MaiExpoWP
  */
 
-namespace MaiWPUI;
+namespace MaiExpoWP;
 
-use MaiWPUI\Logger;
+use MaiExpoWP\Logger;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
@@ -28,7 +28,7 @@ class REST_API {
 	 *
 	 * @since 0.1.0
 	 */
-	const NAMESPACE = 'maiwpui/v1';
+	const NAMESPACE = 'maiexpowp/v1';
 
 	/**
 	 * Instance.
@@ -395,8 +395,8 @@ class REST_API {
 			$logger->warning( sprintf( 'Registration attempt with existing email: %s', $email ) );
 
 			return new \WP_Error(
-				'maiwpui_email_exists',
-				__( 'An account with this email already exists.', 'maiwpui' ),
+				'maiexpowp_email_exists',
+				__( 'An account with this email already exists.', 'maiexpowp' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -418,7 +418,7 @@ class REST_API {
 			$logger->error( sprintf( 'Registration failed for %s: %s', $email, $user_id->get_error_message() ) );
 
 			return new \WP_Error(
-				'maiwpui_registration_failed',
+				'maiexpowp_registration_failed',
 				$user_id->get_error_message(),
 				[ 'status' => 400 ]
 			);
@@ -501,8 +501,8 @@ class REST_API {
 			$logger->warning( sprintf( 'Failed login attempt for: %s', $username ) );
 
 			return new \WP_Error(
-				'maiwpui_invalid_credentials',
-				__( 'Invalid username or password.', 'maiwpui' ),
+				'maiexpowp_invalid_credentials',
+				__( 'Invalid username or password.', 'maiexpowp' ),
 				[ 'status' => 401 ]
 			);
 		}
@@ -541,7 +541,7 @@ class REST_API {
 		return new \WP_REST_Response(
 			[
 				'success' => true,
-				'message' => __( 'Logged out successfully.', 'maiwpui' ),
+				'message' => __( 'Logged out successfully.', 'maiexpowp' ),
 			],
 			200
 		);
@@ -565,7 +565,7 @@ class REST_API {
 		return new \WP_REST_Response(
 			[
 				'success' => true,
-				'message' => __( 'Logged out from all devices.', 'maiwpui' ),
+				'message' => __( 'Logged out from all devices.', 'maiexpowp' ),
 			],
 			200
 		);
@@ -612,8 +612,8 @@ class REST_API {
 			$logger->warning( sprintf( 'Profile request for non-existent user ID: %d', $user_id ) );
 
 			return new \WP_Error(
-				'maiwpui_user_not_found',
-				__( 'User not found.', 'maiwpui' ),
+				'maiexpowp_user_not_found',
+				__( 'User not found.', 'maiexpowp' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -658,7 +658,7 @@ class REST_API {
 		 * @param array $response_data The profile response data.
 		 * @param int   $user_id       The user ID.
 		 */
-		$response_data = apply_filters( 'maiwpui_user_profile_data', $response_data, $user_id );
+		$response_data = apply_filters( 'maiexpowp_user_profile_data', $response_data, $user_id );
 
 		return new \WP_REST_Response( $response_data, 200 );
 	}
@@ -681,8 +681,8 @@ class REST_API {
 			$logger->warning( sprintf( 'Invalid meta update request from user ID: %d', $user_id ) );
 
 			return new \WP_Error(
-				'maiwpui_invalid_meta',
-				__( 'Meta must be a non-empty object.', 'maiwpui' ),
+				'maiexpowp_invalid_meta',
+				__( 'Meta must be a non-empty object.', 'maiexpowp' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -693,8 +693,8 @@ class REST_API {
 			$logger->warning( sprintf( 'No allowed meta keys in update request from user ID: %d. Requested keys: %s', $user_id, implode( ', ', array_keys( $meta ) ) ) );
 
 			return new \WP_Error(
-				'maiwpui_no_allowed_keys',
-				__( 'None of the provided meta keys are allowed.', 'maiwpui' ),
+				'maiexpowp_no_allowed_keys',
+				__( 'None of the provided meta keys are allowed.', 'maiexpowp' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -770,8 +770,8 @@ class REST_API {
 			$logger->warning( sprintf( 'Attempt to set terms on disallowed taxonomy "%s" by user ID: %d', $taxonomy, $user_id ) );
 
 			return new \WP_Error(
-				'maiwpui_taxonomy_not_allowed',
-				__( 'This taxonomy is not allowed.', 'maiwpui' ),
+				'maiexpowp_taxonomy_not_allowed',
+				__( 'This taxonomy is not allowed.', 'maiexpowp' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -781,8 +781,8 @@ class REST_API {
 			$logger->warning( sprintf( 'Attempt to set terms on non-existent taxonomy "%s" by user ID: %d', $taxonomy, $user_id ) );
 
 			return new \WP_Error(
-				'maiwpui_taxonomy_not_found',
-				__( 'Taxonomy not found.', 'maiwpui' ),
+				'maiexpowp_taxonomy_not_found',
+				__( 'Taxonomy not found.', 'maiexpowp' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -794,7 +794,7 @@ class REST_API {
 			$logger->error( sprintf( 'Failed to set terms for user ID %d on taxonomy "%s": %s', $user_id, $taxonomy, $result->get_error_message() ) );
 
 			return new \WP_Error(
-				'maiwpui_terms_failed',
+				'maiexpowp_terms_failed',
 				$result->get_error_message(),
 				[ 'status' => 400 ]
 			);
@@ -829,8 +829,8 @@ class REST_API {
 		// Check if taxonomy exists.
 		if ( ! taxonomy_exists( $taxonomy ) ) {
 			return new \WP_Error(
-				'maiwpui_taxonomy_not_found',
-				__( 'Taxonomy not found.', 'maiwpui' ),
+				'maiexpowp_taxonomy_not_found',
+				__( 'Taxonomy not found.', 'maiexpowp' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -839,7 +839,7 @@ class REST_API {
 
 		if ( is_wp_error( $terms ) ) {
 			return new \WP_Error(
-				'maiwpui_terms_failed',
+				'maiexpowp_terms_failed',
 				$terms->get_error_message(),
 				[ 'status' => 400 ]
 			);
@@ -904,8 +904,8 @@ class REST_API {
 
 		if ( ! $post_id ) {
 			return new \WP_Error(
-				'maiwpui_not_found',
-				__( 'Post not found.', 'maiwpui' ),
+				'maiexpowp_not_found',
+				__( 'Post not found.', 'maiexpowp' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -946,7 +946,7 @@ class REST_API {
 
 		// Store token data as a transient (expires in 5 minutes).
 		set_transient(
-			'maiwpui_autologin_' . $token,
+			'maiexpowp_autologin_' . $token,
 			[
 				'user_id'      => $user_id,
 				'redirect_url' => $redirect_url,
@@ -956,7 +956,7 @@ class REST_API {
 		);
 
 		// Build the auto-login URL.
-		$autologin_url = add_query_arg( 'maiwpui_autologin', $token, $redirect_url );
+		$autologin_url = add_query_arg( 'maiexpowp_autologin', $token, $redirect_url );
 
 		return new \WP_REST_Response(
 			[
@@ -986,7 +986,7 @@ class REST_API {
 		 *
 		 * @param array $allowed_keys Array of allowed meta key names.
 		 */
-		$allowed_keys = apply_filters( 'maiwpui_allowed_user_meta_keys', [] );
+		$allowed_keys = apply_filters( 'maiexpowp_allowed_user_meta_keys', [] );
 
 		if ( empty( $allowed_keys ) ) {
 			return [];
@@ -1010,6 +1010,6 @@ class REST_API {
 		 *
 		 * @param array $taxonomies Array of allowed taxonomy names.
 		 */
-		return apply_filters( 'maiwpui_allowed_user_taxonomies', [ 'user-group' ] );
+		return apply_filters( 'maiexpowp_allowed_user_taxonomies', [ 'user-group' ] );
 	}
 }

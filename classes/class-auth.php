@@ -1,6 +1,6 @@
 <?php
 /**
- * MaiWPUI Auth class.
+ * MaiExpoWP Auth class.
  *
  * Handles authentication token generation and verification.
  * Uses selector/validator pattern for secure token storage.
@@ -12,12 +12,12 @@
  *
  * @since 0.1.0
  *
- * @package MaiWPUI
+ * @package MaiExpoWP
  */
 
-namespace MaiWPUI;
+namespace MaiExpoWP;
 
-use MaiWPUI\Logger;
+use MaiExpoWP\Logger;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
@@ -34,7 +34,7 @@ class Auth {
 	 *
 	 * @since 0.1.0
 	 */
-	const TOKEN_META_KEY = 'maiwpui_auth_tokens';
+	const TOKEN_META_KEY = 'maiexpowp_auth_tokens';
 
 	/**
 	 * Initialize auth hooks.
@@ -332,8 +332,8 @@ class Auth {
 			$logger->warning( sprintf( 'Permission denied: invalid token for route %s', $request->get_route() ) );
 
 			return new \WP_Error(
-				'maiwpui_invalid_token',
-				__( 'Invalid or expired token.', 'maiwpui' ),
+				'maiexpowp_invalid_token',
+				__( 'Invalid or expired token.', 'maiexpowp' ),
 				[ 'status' => 401 ]
 			);
 		}

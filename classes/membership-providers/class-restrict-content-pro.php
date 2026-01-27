@@ -1,17 +1,17 @@
 <?php
 /**
- * MaiWPUI Restrict Content Pro provider.
+ * MaiExpoWP Restrict Content Pro provider.
  *
  * Membership provider for Restrict Content Pro plugin.
  *
  * @since 0.1.0
  *
- * @package MaiWPUI
+ * @package MaiExpoWP
  */
 
-namespace MaiWPUI\Providers;
+namespace MaiExpoWP\Providers;
 
-use MaiWPUI\Membership_Provider;
+use MaiExpoWP\Membership_Provider;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
